@@ -18,7 +18,10 @@ function wallet(id: string, opening: number, overrides: Partial<Wallet> = {}): W
   return {
     id,
     name: id === "upi" ? "UPI" : "Cash",
+    kind: id === "upi" ? "upi" : "cash",
     icon: id === "upi" ? "Smartphone" : "Banknote",
+    paymentMethod: id === "upi" ? "UPI" : "Cash",
+    sortOrder: id === "upi" ? 0 : 1,
     enabled: true,
     openingBalance: rupees(opening),
     startDate: "2026-11-26",
@@ -105,11 +108,11 @@ describe("wallet balances", () => {
     expect(summary.transactionCount).toBe(0);
   });
 
-  it("excludes disabled wallets from total money", () => {
+  it("keeps disabled wallet balances in total money", () => {
     const summaries = [upi, wallet("cash", 2000, { enabled: false })].map((item) =>
       summarizeWallet(item, [], [], []),
     );
-    expect(totalMoney(summaries)).toBe(rupees(3000));
+    expect(totalMoney(summaries)).toBe(rupees(5000));
   });
 
   it("detects insufficient balances without touching other wallets", () => {

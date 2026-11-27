@@ -1,7 +1,6 @@
 "use client";
 
 import { create } from "zustand";
-import { walletIdForPaymentMethod } from "@/constants/wallets";
 import { toMinorUnits, todayISO } from "@/lib/calculations";
 import { importMockData } from "@/lib/db/import";
 import { createMockData } from "@/lib/mock/data";
@@ -74,10 +73,7 @@ function toTransaction(values: TransactionFormValues, id: number, createdAt: str
     description: values.description?.trim() || undefined,
     date: values.date,
     paymentMethod: values.paymentMethod,
-    walletId:
-      values.type === "income" || values.type === "expense"
-        ? (walletIdForPaymentMethod(values.paymentMethod) ?? undefined)
-        : undefined,
+    walletId: values.walletId,
     classification: values.type === "expense" ? values.classification : undefined,
     createdAt,
     updatedAt: now(),

@@ -31,6 +31,7 @@ export const transactionSchema = z
       .regex(/^\d{4}-\d{2}-\d{2}$/, "Use a valid date")
       .refine(isValidISODate, "Use a valid date"),
     paymentMethod: z.enum(PAYMENT_METHODS),
+    walletId: z.string().min(1, "Choose a wallet"),
     classification: z.enum(["need", "want"]).optional(),
   })
   .superRefine((values, context) => {

@@ -1,4 +1,3 @@
-import { walletIdForPaymentMethod } from "@/constants/wallets";
 import { toMinorUnits } from "@/lib/calculations";
 import { db } from "@/lib/db";
 import type { TransactionFormValues } from "@/lib/validation";
@@ -18,7 +17,7 @@ function toRecord(values: TransactionFormValues, createdAt: string, updatedAt: s
     description: values.description?.trim() || undefined,
     date: values.date,
     paymentMethod: values.paymentMethod,
-    walletId: walletIdForPaymentMethod(values.paymentMethod) ?? undefined,
+    walletId: values.walletId,
     classification: values.type === "expense" ? values.classification : undefined,
     createdAt,
     updatedAt,

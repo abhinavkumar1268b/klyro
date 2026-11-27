@@ -10,6 +10,7 @@ const baseTransaction = {
   title: "Lunch",
   date: "2026-11-25",
   paymentMethod: "UPI" as const,
+  walletId: "upi",
   classification: "need" as const,
 };
 

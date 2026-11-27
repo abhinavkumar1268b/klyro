@@ -1,4 +1,5 @@
 import { DEFAULT_CATEGORIES } from "@/constants/categories";
+import { WALLET_DEFINITIONS } from "@/constants/wallets";
 import type {
   Budget,
   BudgetPlan,
@@ -354,28 +355,24 @@ function buildWallets(): Wallet[] {
   const now = new Date();
   const stamp = now.toISOString();
   const startDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-  return [
-    {
-      id: "upi",
-      name: "UPI",
-      icon: "Smartphone",
-      enabled: true,
-      openingBalance: rupees(3500),
-      startDate,
-      createdAt: stamp,
-      updatedAt: stamp,
-    },
-    {
-      id: "cash",
-      name: "Cash",
-      icon: "Banknote",
-      enabled: true,
-      openingBalance: rupees(1500),
-      startDate,
-      createdAt: stamp,
-      updatedAt: stamp,
-    },
-  ];
+  return WALLET_DEFINITIONS.map((definition, index) => ({
+    id: definition.id,
+    name: definition.name,
+    kind: definition.kind,
+    icon: definition.icon,
+    paymentMethod: definition.paymentMethod,
+    enabled: definition.id === "upi" || definition.id === "cash",
+    sortOrder: index,
+    openingBalance:
+      definition.id === "upi"
+        ? rupees(3500)
+        : definition.id === "cash"
+          ? rupees(1500)
+          : 0,
+    startDate,
+    createdAt: stamp,
+    updatedAt: stamp,
+  }));
 }
 
 export interface MockData {

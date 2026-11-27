@@ -77,7 +77,10 @@ const recurringPayment = z.object({
 const wallet = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
+  kind: z.enum(["upi", "cash", "card", "bank", "other"]).default("other"),
   icon: z.string().min(1),
+  paymentMethod: z.string().optional(),
+  sortOrder: z.number().int().default(0),
   enabled: z.boolean(),
   openingBalance: z.number().int(),
   startDate: dateString,

@@ -67,10 +67,13 @@ export function summarizeWallet(
   };
 }
 
+/** All owned wallet balances, including disabled wallets, are real money. */
 export function totalMoney(summaries: WalletSummary[]): number {
-  return summaries
-    .filter((summary) => summary.wallet.enabled)
-    .reduce((sum, summary) => sum + summary.balance, 0);
+  return summaries.reduce((sum, summary) => sum + summary.balance, 0);
+}
+
+export function activeWalletCount(summaries: WalletSummary[]): number {
+  return summaries.filter((summary) => summary.wallet.enabled).length;
 }
 
 export interface DailyMoneyActivity {

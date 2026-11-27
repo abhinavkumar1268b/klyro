@@ -8,4 +8,4 @@ export const DEFAULT_LOCALE = "en-IN";
 
 /** Storage keys — all application data lives in IndexedDB via Dexie. */
 export const DB_NAME = "klyro";
-export const DB_VERSION = 4;
+export const DB_VERSION = 5;

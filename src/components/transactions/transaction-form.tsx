@@ -19,7 +19,6 @@ import {
 import {
   CLASSIFICATION_OPTIONS,
   paymentMethodForWallet,
-  walletIdForPaymentMethod,
 } from "@/constants";
 import type { PaymentMethod } from "@/constants/transactions";
 import {
@@ -84,16 +83,11 @@ export function TransactionForm({
   const walletSummaries = wallets.map((wallet) =>
     summarizeWallet(wallet, allTransactions, walletTransfers, walletAdjustments),
   );
-  const enabledMethods = wallets
-    .filter((wallet) => wallet.enabled)
-    .map((wallet) => paymentMethodForWallet(wallet.id as Parameters<typeof paymentMethodForWallet>[0]));
-  const paymentOptions = [
-    ...enabledMethods,
-    ...(transaction?.paymentMethod &&
-    !enabledMethods.includes(transaction.paymentMethod as PaymentMethod)
-      ? [transaction.paymentMethod as PaymentMethod]
-      : []),
-  ].filter((method, index, items) => items.indexOf(method) === index);
+  const walletOptions = wallets
+    .filter((wallet) => wallet.enabled || wallet.id === transaction?.walletId)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+  const defaultWalletId =
+    transaction?.walletId ?? wallets.find((wallet) => wallet.enabled)?.id ?? "upi";
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
@@ -105,7 +99,8 @@ export function TransactionForm({
       date: transaction?.date ?? todayISO(),
       paymentMethod:
         (transaction?.paymentMethod as PaymentMethod | undefined) ??
-        paymentMethodForWallet("upi"),
+        paymentMethodForWallet(wallets.find((wallet) => wallet.id === defaultWalletId) ?? defaultWalletId),
+      walletId: defaultWalletId,
       classification:
         transaction?.classification ??
         (transaction?.type === "income" ? undefined : preferredClassification),
@@ -118,7 +113,7 @@ export function TransactionForm({
   const title = form.watch("title");
   const description = form.watch("description");
   const date = form.watch("date");
-  const paymentMethod = form.watch("paymentMethod");
+  const walletId = form.watch("walletId");
   const classification = form.watch("classification");
 
   useEffect(() => {
@@ -142,6 +137,14 @@ export function TransactionForm({
       form.setValue("date", currentDate.dateKey);
     }
   }, [currentDate, dateTouched, transaction, form]);
+
+  function handleWalletChange(id: string) {
+    const wallet = wallets.find((item) => item.id === id);
+    form.setValue("walletId", id, { shouldValidate: true });
+    form.setValue("paymentMethod", paymentMethodForWallet(wallet ?? id), {
+      shouldValidate: true,
+    });
+  }
 
   function handleTypeChange(value: TransactionType) {
     form.setValue("type", value, { shouldValidate: true });
@@ -168,6 +171,7 @@ export function TransactionForm({
         description: "",
         date: values.date,
         paymentMethod: values.paymentMethod,
+        walletId: values.walletId,
         classification: values.type === "expense" ? preferredClassification : undefined,
       });
       onSaved?.(values);
@@ -183,13 +187,11 @@ export function TransactionForm({
 
   async function onSubmit(values: TransactionFormValues) {
     const amount = toMinorUnits(values.amount);
-    const walletId = walletIdForPaymentMethod(values.paymentMethod);
-    const summary = walletSummaries.find((item) => item.wallet.id === walletId);
+    const summary = walletSummaries.find((item) => item.wallet.id === values.walletId);
 
     if (values.type === "expense" && summary) {
       const oldAmount =
-        transaction?.type === "expense" &&
-        walletIdForPaymentMethod(transaction.paymentMethod) === walletId
+        transaction?.type === "expense" && transaction.walletId === values.walletId
           ? transaction.amount
           : 0;
       const available = summary.balance + oldAmount;
@@ -303,18 +305,23 @@ export function TransactionForm({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="payment-method">
+            <Label htmlFor="wallet-id">
               {type === "income" ? "Received In" : "Paid Using"}
             </Label>
-            <Select id="payment-method" {...form.register("paymentMethod")}>
-              {paymentOptions.map((method) => (
-                <option key={method} value={method}>
-                  {method}
+            <Select
+              id="wallet-id"
+              value={walletId}
+              onChange={(event) => handleWalletChange(event.target.value)}
+            >
+              {walletOptions.map((wallet) => (
+                <option key={wallet.id} value={wallet.id}>
+                  {wallet.name}
+                  {wallet.enabled ? "" : " (disabled)"}
                 </option>
               ))}
             </Select>
-            {form.formState.errors.paymentMethod ? (
-              <p className="text-xs text-danger">{form.formState.errors.paymentMethod.message}</p>
+            {form.formState.errors.walletId ? (
+              <p className="text-xs text-danger">{form.formState.errors.walletId.message}</p>
             ) : null}
           </div>
           <div className="space-y-2">
@@ -397,7 +404,9 @@ export function TransactionForm({
               </div>
               <div className="flex justify-between gap-4">
                 <span className="text-muted-foreground">Wallet</span>
-                <span className="text-right text-foreground">{paymentMethod || "—"}</span>
+                <span className="text-right text-foreground">
+                  {wallets.find((wallet) => wallet.id === walletId)?.name ?? "—"}
+                </span>
               </div>
               {type === "expense" ? (
                 <div className="flex justify-between gap-4">

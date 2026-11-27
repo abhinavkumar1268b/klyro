@@ -104,7 +104,10 @@ export type NewGoal = Omit<
 export interface Wallet {
   id: string;
   name: string;
+  kind: "upi" | "cash" | "card" | "bank" | "other";
   icon: string;
+  paymentMethod?: string;
+  sortOrder: number;
   enabled: boolean;
   /** Balance at `startDate`; earlier transactions never affect the wallet. */
   openingBalance: number;

@@ -47,6 +47,8 @@ export async function recordRecurringPayment(id: number): Promise<void> {
       description: `Recurring payment · ${payment.name}`,
       date: payment.nextDueDate,
       paymentMethod: "Other",
+      walletId:
+        useDemoStore.getState().wallets.find((wallet) => wallet.enabled)?.id ?? "upi",
     });
     demo.updateRecurringPayment(id, {
       name: payment.name,

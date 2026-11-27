@@ -7,6 +7,7 @@ import {
   CarFront,
   CircleDollarSign,
   Clapperboard,
+  CreditCard,
   Gift,
   GraduationCap,
   HandCoins,
@@ -23,6 +24,7 @@ import {
   Store,
   Target,
   UtensilsCrossed,
+  Wallet,
 } from "lucide-react";
 
 interface CategoryIconProps {
@@ -49,6 +51,8 @@ export function CategoryIcon({ name, className }: CategoryIconProps) {
       return <CircleDollarSign className={className} aria-hidden="true" />;
     case "Clapperboard":
       return <Clapperboard className={className} aria-hidden="true" />;
+    case "CreditCard":
+      return <CreditCard className={className} aria-hidden="true" />;
     case "Gift":
       return <Gift className={className} aria-hidden="true" />;
     case "GraduationCap":
@@ -79,6 +83,8 @@ export function CategoryIcon({ name, className }: CategoryIconProps) {
       return <Target className={className} aria-hidden="true" />;
     case "UtensilsCrossed":
       return <UtensilsCrossed className={className} aria-hidden="true" />;
+    case "Wallet":
+      return <Wallet className={className} aria-hidden="true" />;
     default:
       return <Shapes className={className} aria-hidden="true" />;
   }

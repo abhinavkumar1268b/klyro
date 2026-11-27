@@ -1,6 +1,6 @@
 import { DEFAULT_CURRENCY } from "@/constants/app";
 import { DEFAULT_CATEGORIES } from "@/constants/categories";
-import { DEFAULT_WALLET_IDS, WALLET_DEFINITIONS } from "@/constants/wallets";
+import { DEFAULT_ENABLED_WALLET_IDS, WALLET_DEFINITIONS } from "@/constants/wallets";
 import { localDateKey } from "@/lib/date";
 import { db } from "./database";
 
@@ -22,17 +22,17 @@ export async function initializeDatabase(): Promise<void> {
 
       // Safe fallback for databases upgraded before wallet seeding, and for
       // installs where the v4 upgrade produced an empty table.
-      if ((await db.wallets.count()) === 0) {
+      const existingWallets = await db.wallets.toArray();
+      const existingIds = new Set(existingWallets.map((wallet) => wallet.id));
+      const missing = WALLET_DEFINITIONS.filter((definition) => !existingIds.has(definition.id));
+      if (missing.length > 0) {
         const stamp = new Date().toISOString();
         const startDate = localDateKey();
         await db.wallets.bulkAdd(
-          WALLET_DEFINITIONS.filter((wallet) =>
-            DEFAULT_WALLET_IDS.includes(wallet.id as (typeof DEFAULT_WALLET_IDS)[number]),
-          ).map((wallet) => ({
-            id: wallet.id,
-            name: wallet.name,
-            icon: wallet.icon,
-            enabled: true,
+          missing.map((wallet) => ({
+            ...wallet,
+            enabled: DEFAULT_ENABLED_WALLET_IDS.includes(wallet.id),
+            sortOrder: WALLET_DEFINITIONS.findIndex((item) => item.id === wallet.id),
             openingBalance: 0,
             startDate,
             createdAt: stamp,
