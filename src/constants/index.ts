@@ -4,3 +4,4 @@ export * from "./categories";
 export * from "./navigation";
 export * from "./settings";
 export * from "./transactions";
+export * from "./wallets";

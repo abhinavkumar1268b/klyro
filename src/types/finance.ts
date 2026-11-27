@@ -24,6 +24,7 @@ export interface Transaction {
   description?: string;
   date: string;
   paymentMethod?: string;
+  walletId?: string;
   classification?: TransactionClassification;
   sourceRecurringId?: number;
   createdAt: string;
@@ -99,6 +100,39 @@ export type NewGoal = Omit<
   Goal,
   "id" | "createdAt" | "updatedAt" | "completedAt" | "contributions"
 >;
+
+export interface Wallet {
+  id: string;
+  name: string;
+  icon: string;
+  enabled: boolean;
+  /** Balance at `startDate`; earlier transactions never affect the wallet. */
+  openingBalance: number;
+  startDate: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Internal money movement — never counted as income or an expense. */
+export interface WalletTransfer {
+  id?: number;
+  fromWalletId: string;
+  toWalletId: string;
+  amount: number;
+  date: string;
+  note?: string;
+  createdAt: string;
+}
+
+export interface WalletAdjustment {
+  id?: number;
+  walletId: string;
+  /** Signed amount: positive adds money, negative removes it. */
+  amount: number;
+  date: string;
+  note?: string;
+  createdAt: string;
+}
 
 export type RecurrenceFrequency = "weekly" | "monthly" | "yearly";
 

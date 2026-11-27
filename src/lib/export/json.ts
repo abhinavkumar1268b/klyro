@@ -9,18 +9,25 @@ interface ExportPayload {
   budgets: unknown[];
   goals: unknown[];
   recurringPayments: unknown[];
+  wallets: unknown[];
+  walletTransfers: unknown[];
+  walletAdjustments: unknown[];
   settings: unknown[];
 }
 
 export async function exportAllData(): Promise<void> {
-  const [categories, transactions, budgets, goals, recurringPayments, settings] = await Promise.all([
-    db.categories.toArray(),
-    db.transactions.toArray(),
-    db.budgets.toArray(),
-    db.goals.toArray(),
-    db.recurringPayments.toArray(),
-    db.settings.toArray(),
-  ]);
+  const [categories, transactions, budgets, goals, recurringPayments, wallets, walletTransfers, walletAdjustments, settings] =
+    await Promise.all([
+      db.categories.toArray(),
+      db.transactions.toArray(),
+      db.budgets.toArray(),
+      db.goals.toArray(),
+      db.recurringPayments.toArray(),
+      db.wallets.toArray(),
+      db.walletTransfers.toArray(),
+      db.walletAdjustments.toArray(),
+      db.settings.toArray(),
+    ]);
 
   const payload: ExportPayload = {
     app: "KLYRO",
@@ -30,6 +37,9 @@ export async function exportAllData(): Promise<void> {
     budgets,
     goals,
     recurringPayments,
+    wallets,
+    walletTransfers,
+    walletAdjustments,
     settings,
   };
 
@@ -53,6 +63,9 @@ export async function resetAllData(): Promise<void> {
       db.budgets,
       db.goals,
       db.recurringPayments,
+      db.wallets,
+      db.walletTransfers,
+      db.walletAdjustments,
       db.settings,
     ],
     async () => {
@@ -62,6 +75,9 @@ export async function resetAllData(): Promise<void> {
         db.budgets.clear(),
         db.goals.clear(),
         db.recurringPayments.clear(),
+        db.wallets.clear(),
+        db.walletTransfers.clear(),
+        db.walletAdjustments.clear(),
         db.settings.clear(),
       ]);
     },

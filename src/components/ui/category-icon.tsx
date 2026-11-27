@@ -1,6 +1,7 @@
 import {
   Award,
   Bath,
+  Banknote,
   BriefcaseBusiness,
   BusFront,
   CarFront,
@@ -11,12 +12,14 @@ import {
   HandCoins,
   HeartPulse,
   Laptop,
+  Landmark,
   ReceiptText,
   Shapes,
   ShieldCheck,
   ShoppingBag,
   ShoppingBasket,
   Sparkles,
+  Smartphone,
   Store,
   Target,
   UtensilsCrossed,
@@ -32,6 +35,8 @@ export function CategoryIcon({ name, className }: CategoryIconProps) {
   switch (name) {
     case "Award":
       return <Award className={className} aria-hidden="true" />;
+    case "Banknote":
+      return <Banknote className={className} aria-hidden="true" />;
     case "Bath":
       return <Bath className={className} aria-hidden="true" />;
     case "BriefcaseBusiness":
@@ -54,6 +59,8 @@ export function CategoryIcon({ name, className }: CategoryIconProps) {
       return <HeartPulse className={className} aria-hidden="true" />;
     case "Laptop":
       return <Laptop className={className} aria-hidden="true" />;
+    case "Landmark":
+      return <Landmark className={className} aria-hidden="true" />;
     case "ReceiptText":
       return <ReceiptText className={className} aria-hidden="true" />;
     case "ShieldCheck":
@@ -62,6 +69,8 @@ export function CategoryIcon({ name, className }: CategoryIconProps) {
       return <ShoppingBag className={className} aria-hidden="true" />;
     case "ShoppingBasket":
       return <ShoppingBasket className={className} aria-hidden="true" />;
+    case "Smartphone":
+      return <Smartphone className={className} aria-hidden="true" />;
     case "Sparkles":
       return <Sparkles className={className} aria-hidden="true" />;
     case "Store":

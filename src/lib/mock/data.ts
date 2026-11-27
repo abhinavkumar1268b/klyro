@@ -7,6 +7,9 @@ import type {
   RecurringPayment,
   Transaction,
   TransactionType,
+  Wallet,
+  WalletAdjustment,
+  WalletTransfer,
 } from "@/types";
 
 /**
@@ -347,6 +350,34 @@ function buildRecurringPayments(): RecurringPayment[] {
   ];
 }
 
+function buildWallets(): Wallet[] {
+  const now = new Date();
+  const stamp = now.toISOString();
+  const startDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  return [
+    {
+      id: "upi",
+      name: "UPI",
+      icon: "Smartphone",
+      enabled: true,
+      openingBalance: rupees(3500),
+      startDate,
+      createdAt: stamp,
+      updatedAt: stamp,
+    },
+    {
+      id: "cash",
+      name: "Cash",
+      icon: "Banknote",
+      enabled: true,
+      openingBalance: rupees(1500),
+      startDate,
+      createdAt: stamp,
+      updatedAt: stamp,
+    },
+  ];
+}
+
 export interface MockData {
   categories: Category[];
   transactions: Transaction[];
@@ -354,6 +385,9 @@ export interface MockData {
   goals: Goal[];
   budgetPlan: BudgetPlan;
   recurringPayments: RecurringPayment[];
+  wallets: Wallet[];
+  walletTransfers: WalletTransfer[];
+  walletAdjustments: WalletAdjustment[];
 }
 
 export function createMockData(): MockData {
@@ -367,5 +401,8 @@ export function createMockData(): MockData {
     goals: buildGoals(),
     budgetPlan: buildBudgetPlan(),
     recurringPayments: buildRecurringPayments(),
+    wallets: buildWallets(),
+    walletTransfers: [],
+    walletAdjustments: [],
   };
 }

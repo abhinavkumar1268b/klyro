@@ -8,3 +8,5 @@ export * from "./recent-transactions";
 export * from "./safe-to-spend-card";
 export * from "./savings-goal-mini";
 export * from "./stat-card";
+export * from "./today-money-activity";
+export * from "./total-money-card";

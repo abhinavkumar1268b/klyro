@@ -13,6 +13,7 @@ const transaction = z.object({
   description: z.string().optional(),
   date: dateString,
   paymentMethod: z.string().optional(),
+  walletId: z.string().optional(),
   classification: z.enum(["need", "want"]).optional(),
   sourceRecurringId: z.number().optional(),
   createdAt: timestamp,
@@ -73,6 +74,36 @@ const recurringPayment = z.object({
   updatedAt: timestamp,
 });
 
+const wallet = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  icon: z.string().min(1),
+  enabled: z.boolean(),
+  openingBalance: z.number().int(),
+  startDate: dateString,
+  createdAt: timestamp,
+  updatedAt: timestamp,
+});
+
+const walletTransfer = z.object({
+  id: z.number().int().positive().optional(),
+  fromWalletId: z.string().min(1),
+  toWalletId: z.string().min(1),
+  amount: z.number().int(),
+  date: dateString,
+  note: z.string().optional(),
+  createdAt: timestamp,
+});
+
+const walletAdjustment = z.object({
+  id: z.number().int().positive().optional(),
+  walletId: z.string().min(1),
+  amount: z.number().int(),
+  date: dateString,
+  note: z.string().optional(),
+  createdAt: timestamp,
+});
+
 export const backupSchema = z.object({
   app: z.literal("KLYRO"),
   exportedAt: timestamp,
@@ -81,6 +112,9 @@ export const backupSchema = z.object({
   budgets: z.array(budget),
   goals: z.array(goal),
   recurringPayments: z.array(recurringPayment).default([]),
+  wallets: z.array(wallet).default([]),
+  walletTransfers: z.array(walletTransfer).default([]),
+  walletAdjustments: z.array(walletAdjustment).default([]),
   settings: z.array(z.object({ key: z.string().min(1), value: z.string() })),
 });
 

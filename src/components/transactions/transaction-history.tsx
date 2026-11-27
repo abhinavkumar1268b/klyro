@@ -4,13 +4,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeftRight, Download, Pencil, Trash } from "lucide-react";
-import { PAYMENT_METHODS } from "@/constants";
+import { PAYMENT_METHODS, walletIdForPaymentMethod, paymentMethodForWallet } from "@/constants";
 import { removeTransaction } from "@/features/transactions";
 import { useCategories, useTransactions } from "@/hooks";
 import {
   filterByDateRange,
   formatCurrency,
   formatDate,
+  formatLocalTime,
   formatMonth,
   getMonthKey,
   summarizeCashflow,
@@ -156,6 +157,12 @@ export function TransactionHistory({ initialRange }: TransactionHistoryProps) {
 
   const categoryName = (id: string) => categories.find((item) => item.id === id)?.name ?? id;
   const categoryIcon = (id: string) => categories.find((item) => item.id === id)?.icon ?? "Shapes";
+  const walletLabel = (method?: string) => {
+    const walletId = walletIdForPaymentMethod(method);
+    return walletId
+      ? paymentMethodForWallet(walletId as Parameters<typeof paymentMethodForWallet>[0])
+      : (method ?? "Other");
+  };
 
   function exportCSV() {
     downloadCSV(`klyro-transactions-${todayISO()}.csv`, transactionsToCSV(scoped));
@@ -388,7 +395,7 @@ export function TransactionHistory({ initialRange }: TransactionHistoryProps) {
                         </div>
                         <p className="mt-0.5 truncate text-xs text-muted-foreground">
                           {categoryName(transaction.categoryId)} · {formatDate(transaction.date)} ·{" "}
-                          {transaction.paymentMethod ?? "UPI"}
+                          {formatLocalTime(transaction.createdAt)} · {walletLabel(transaction.paymentMethod)}
                         </p>
                         {transaction.description ? (
                           <p className="mt-0.5 truncate text-xs text-muted-foreground">

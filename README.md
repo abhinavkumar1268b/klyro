@@ -121,7 +121,13 @@ Rules of thumb: matte surfaces, hairline borders, one accent, restrained motion,
 
 Ready-made foundation components live in each domain folder — for example `CashflowChart` (themed Recharts setup), `BudgetProgressRow`, `GoalProgressCard`, `TransactionTypeBadge` and `SettingsSection`. They are intentionally unused until their feature screens are built.
 
-### Dates and midnight rollover
+### Wallets and migration
+
+Wallets are separate from budgets: they hold actual money (UPI and Cash by default), while budgets are spending limits. Wallet balances are derived as `opening balance + received - spent + transfers in - transfers out + manual adjustments`. Income credits and expenses debit only the wallet selected in the form; transfers move money between wallets and never appear in income/expense analytics.
+
+Database v4 added `wallets`, `walletTransfers` and `walletAdjustments`. Existing transactions were not modified, duplicated or deleted. New wallets start with an opening balance of zero and a `startDate` of the upgrade day, so older transactions are never retroactively credited or debited. `initializeDatabase()` also seeds wallets if an upgraded database has an empty wallet table.
+
+## Dates and midnight rollover
 
 `src/lib/date.ts` is the single source for local calendar logic: local `YYYY-MM-DD` keys, local parsing, month keys, next-local-midnight calculation and date shifting. UTC timestamps are used only for `createdAt`/`updatedAt`; transaction `date` always represents the user's local calendar day. `src/lib/current-date.ts` schedules a timer to the next local midnight (recomputed each time, so 23/24/25-hour DST days are correct) and `useCurrentDate()` re-checks on visibility, focus, `pageshow`, online and resume events. The dashboard, insights and forms follow today's date until the user intentionally navigates away.
 

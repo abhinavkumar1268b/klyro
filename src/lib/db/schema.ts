@@ -1,6 +1,8 @@
 import Dexie, { type EntityTable } from "dexie";
 import { DB_NAME, DB_VERSION } from "@/constants/app";
 import { DEFAULT_CATEGORIES } from "@/constants/categories";
+import { DEFAULT_WALLET_IDS, WALLET_DEFINITIONS } from "@/constants/wallets";
+import { localDateKey } from "@/lib/date";
 import type {
   AppSetting,
   Budget,
@@ -8,6 +10,9 @@ import type {
   Goal,
   RecurringPayment,
   Transaction,
+  Wallet,
+  WalletAdjustment,
+  WalletTransfer,
 } from "@/types";
 
 const STORES_V1 = {
@@ -26,16 +31,24 @@ const STORES_V3 = {
   recurringPayments: "++id, nextDueDate, frequency",
 };
 
-/**
- * IndexedDB schema. All data is local-first and never leaves the device.
- * Indexes are intentionally narrow: list queries filter on date/category/month.
- */
+const STORES_V4 = {
+  ...STORES_V3,
+  transactions: "++id, type, date, categoryId, createdAt, sourceRecurringId, walletId",
+  wallets: "id, enabled",
+  walletTransfers: "++id, date",
+  walletAdjustments: "++id, walletId, date",
+};
+
+/** IndexedDB schema. All data is local-first and never leaves the device. */
 export class KlyroDatabase extends Dexie {
   transactions!: EntityTable<Transaction, "id">;
   categories!: EntityTable<Category, "id">;
   budgets!: EntityTable<Budget, "id">;
   goals!: EntityTable<Goal, "id">;
   recurringPayments!: EntityTable<RecurringPayment, "id">;
+  wallets!: EntityTable<Wallet, "id">;
+  walletTransfers!: EntityTable<WalletTransfer, "id">;
+  walletAdjustments!: EntityTable<WalletAdjustment, "id">;
   settings!: EntityTable<AppSetting, "key">;
 
   constructor() {
@@ -43,7 +56,6 @@ export class KlyroDatabase extends Dexie {
 
     this.version(1).stores(STORES_V1);
 
-    // v2 adds titles, descriptions, payment methods and need/want classes.
     this.version(2).stores(STORES_V2).upgrade(async (transaction) => {
       await transaction
         .table("transactions")
@@ -54,20 +66,40 @@ export class KlyroDatabase extends Dexie {
           if (!record.paymentMethod) record.paymentMethod = "UPI";
           if (record.type === "expense" && !record.classification) record.classification = "need";
         });
-
       await transaction.table("budgets").toCollection().modify((record: Budget) => {
         if (record.categoryId === "transport") record.categoryId = "travel";
       });
-
       await transaction.table("categories").clear();
       await transaction.table("categories").bulkAdd(DEFAULT_CATEGORIES);
     });
 
-    // v3 adds contribution history on goals and recurring payment reminders.
-    this.version(DB_VERSION).stores(STORES_V3).upgrade(async (transaction) => {
+    this.version(3).stores(STORES_V3).upgrade(async (transaction) => {
       await transaction.table("goals").toCollection().modify((goal: Partial<Goal>) => {
         if (!goal.contributions) goal.contributions = [];
       });
+    });
+
+    // v4 introduces wallets. Existing transactions are left untouched: their
+    // dates precede the wallet start date, so they are never credited twice.
+    this.version(DB_VERSION).stores(STORES_V4).upgrade(async (transaction) => {
+      if ((await transaction.table("wallets").count()) === 0) {
+        const stamp = new Date().toISOString();
+        const startDate = localDateKey();
+        await transaction.table("wallets").bulkAdd(
+          WALLET_DEFINITIONS.filter((wallet) =>
+            DEFAULT_WALLET_IDS.includes(wallet.id as (typeof DEFAULT_WALLET_IDS)[number]),
+          ).map((wallet) => ({
+            id: wallet.id,
+            name: wallet.name,
+            icon: wallet.icon,
+            enabled: true,
+            openingBalance: 0,
+            startDate,
+            createdAt: stamp,
+            updatedAt: stamp,
+          })),
+        );
+      }
     });
   }
 }

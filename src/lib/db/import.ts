@@ -17,6 +17,9 @@ export async function importMockData(data: MockData): Promise<void> {
       db.budgets,
       db.goals,
       db.recurringPayments,
+      db.wallets,
+      db.walletTransfers,
+      db.walletAdjustments,
       db.settings,
     ],
     async () => {
@@ -26,6 +29,9 @@ export async function importMockData(data: MockData): Promise<void> {
         db.budgets.clear(),
         db.goals.clear(),
         db.recurringPayments.clear(),
+        db.wallets.clear(),
+        db.walletTransfers.clear(),
+        db.walletAdjustments.clear(),
       ]);
 
       await db.categories.bulkAdd(data.categories);
@@ -33,6 +39,9 @@ export async function importMockData(data: MockData): Promise<void> {
       await db.budgets.bulkAdd(data.budgets.map(stripId));
       await db.goals.bulkAdd(data.goals.map(stripId));
       await db.recurringPayments.bulkAdd(data.recurringPayments.map(stripId));
+      await db.wallets.bulkAdd(data.wallets);
+      await db.walletTransfers.bulkAdd(data.walletTransfers.map(stripId));
+      await db.walletAdjustments.bulkAdd(data.walletAdjustments.map(stripId));
       await db.settings.put({
         key: `budget-plan-${data.budgetPlan.month}`,
         value: JSON.stringify(data.budgetPlan),

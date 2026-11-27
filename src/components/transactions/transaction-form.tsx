@@ -3,20 +3,38 @@
 /* React Hook Form's watch() is intentionally used for the live preview. */
 /* eslint-disable react-hooks/incompatible-library */
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowDownLeft, ArrowUpRight, Check, Info } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { saveTransaction } from "@/features/transactions";
-import { useCategories, useCurrentDate } from "@/hooks";
-import { CLASSIFICATION_OPTIONS, DEFAULT_PAYMENT_METHOD, PAYMENT_METHODS } from "@/constants";
-import { formatCurrency, toMinorUnits, todayISO } from "@/lib/calculations";
+import {
+  useCategories,
+  useCurrentDate,
+  useTransactions,
+  useWalletAdjustments,
+  useWalletTransfers,
+  useWallets,
+} from "@/hooks";
+import {
+  CLASSIFICATION_OPTIONS,
+  paymentMethodForWallet,
+  walletIdForPaymentMethod,
+} from "@/constants";
+import type { PaymentMethod } from "@/constants/transactions";
+import {
+  formatCurrency,
+  summarizeWallet,
+  toMinorUnits,
+  todayISO,
+} from "@/lib/calculations";
 import { transactionSchema, type TransactionFormValues } from "@/lib/validation";
 import { notify } from "@/stores/toast-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import type { Transaction, TransactionClassification, TransactionType } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SegmentedControl } from "@/components/ui/segmented-control";
@@ -50,8 +68,32 @@ export function TransactionForm({
   onSaved,
 }: TransactionFormProps) {
   const { data: categories, isLoading } = useCategories();
+  const { data: wallets } = useWallets();
+  const { data: walletTransfers } = useWalletTransfers();
+  const { data: walletAdjustments } = useWalletAdjustments();
+  const { data: allTransactions } = useTransactions();
   const currentDate = useCurrentDate();
   const preferredClassification = useSettingsStore((state) => state.defaultClassification);
+  const [insufficient, setInsufficient] = useState<{
+    available: number;
+    amount: number;
+    walletName: string;
+    values: TransactionFormValues;
+  } | null>(null);
+
+  const walletSummaries = wallets.map((wallet) =>
+    summarizeWallet(wallet, allTransactions, walletTransfers, walletAdjustments),
+  );
+  const enabledMethods = wallets
+    .filter((wallet) => wallet.enabled)
+    .map((wallet) => paymentMethodForWallet(wallet.id as Parameters<typeof paymentMethodForWallet>[0]));
+  const paymentOptions = [
+    ...enabledMethods,
+    ...(transaction?.paymentMethod &&
+    !enabledMethods.includes(transaction.paymentMethod as PaymentMethod)
+      ? [transaction.paymentMethod as PaymentMethod]
+      : []),
+  ].filter((method, index, items) => items.indexOf(method) === index);
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
@@ -61,7 +103,9 @@ export function TransactionForm({
       title: transaction?.title ?? "",
       description: transaction?.description ?? "",
       date: transaction?.date ?? todayISO(),
-      paymentMethod: (transaction?.paymentMethod as (typeof PAYMENT_METHODS)[number]) ?? DEFAULT_PAYMENT_METHOD,
+      paymentMethod:
+        (transaction?.paymentMethod as PaymentMethod | undefined) ??
+        paymentMethodForWallet("upi"),
       classification:
         transaction?.classification ??
         (transaction?.type === "income" ? undefined : preferredClassification),
@@ -108,7 +152,7 @@ export function TransactionForm({
     );
   }
 
-  async function onSubmit(values: TransactionFormValues) {
+  async function performSave(values: TransactionFormValues) {
     try {
       await saveTransaction(values, transaction?.id);
       notify({
@@ -135,6 +179,27 @@ export function TransactionForm({
         description: "Something went wrong writing to local storage. Please try again.",
       });
     }
+  }
+
+  async function onSubmit(values: TransactionFormValues) {
+    const amount = toMinorUnits(values.amount);
+    const walletId = walletIdForPaymentMethod(values.paymentMethod);
+    const summary = walletSummaries.find((item) => item.wallet.id === walletId);
+
+    if (values.type === "expense" && summary) {
+      const oldAmount =
+        transaction?.type === "expense" &&
+        walletIdForPaymentMethod(transaction.paymentMethod) === walletId
+          ? transaction.amount
+          : 0;
+      const available = summary.balance + oldAmount;
+      if (amount > available) {
+        setInsufficient({ available, amount, walletName: summary.wallet.name, values });
+        return;
+      }
+    }
+
+    await performSave(values);
   }
 
   const selectedCategory = categories.find((category) => category.id === categoryId);
@@ -203,10 +268,10 @@ export function TransactionForm({
         ) : null}
 
         <div className="space-y-2">
-          <Label htmlFor="title">Transaction title</Label>
+          <Label htmlFor="title">{type === "income" ? "Income source" : "Transaction title"}</Label>
           <Input
             id="title"
-            placeholder="e.g. Coffee at Third Wave"
+            placeholder={type === "income" ? "e.g. Freelancing" : "e.g. Coffee at Third Wave"}
             maxLength={120}
             {...form.register("title")}
           />
@@ -238,9 +303,11 @@ export function TransactionForm({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="payment-method">Payment method</Label>
+            <Label htmlFor="payment-method">
+              {type === "income" ? "Received In" : "Paid Using"}
+            </Label>
             <Select id="payment-method" {...form.register("paymentMethod")}>
-              {PAYMENT_METHODS.map((method) => (
+              {paymentOptions.map((method) => (
                 <option key={method} value={method}>
                   {method}
                 </option>
@@ -329,7 +396,7 @@ export function TransactionForm({
                 <span className="text-right text-foreground">{selectedCategory?.name ?? "—"}</span>
               </div>
               <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">Method</span>
+                <span className="text-muted-foreground">Wallet</span>
                 <span className="text-right text-foreground">{paymentMethod || "—"}</span>
               </div>
               {type === "expense" ? (
@@ -356,6 +423,24 @@ export function TransactionForm({
           </div>
         </Card>
       ) : null}
+
+      <ConfirmDialog
+        open={insufficient !== null}
+        onOpenChange={(open) => !open && setInsufficient(null)}
+        title={`Not enough money in ${insufficient?.walletName ?? "this wallet"}`}
+        description={`This expense is ${formatCurrency(
+          insufficient?.amount ?? 0,
+        )} but ${insufficient?.walletName ?? "the wallet"} has ${formatCurrency(
+          insufficient?.available ?? 0,
+        )} available. No other wallet will be used. Continue only if you want an overdrawn wallet.`}
+        confirmLabel="Spend anyway"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={async () => {
+          if (insufficient) await performSave(insufficient.values);
+          setInsufficient(null);
+        }}
+      />
     </form>
   );
 }

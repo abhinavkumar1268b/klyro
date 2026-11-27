@@ -11,6 +11,9 @@ export async function restoreBackup(payload: BackupPayload): Promise<void> {
       db.budgets,
       db.goals,
       db.recurringPayments,
+      db.wallets,
+      db.walletTransfers,
+      db.walletAdjustments,
       db.settings,
     ],
     async () => {
@@ -20,6 +23,9 @@ export async function restoreBackup(payload: BackupPayload): Promise<void> {
         db.budgets.clear(),
         db.goals.clear(),
         db.recurringPayments.clear(),
+        db.wallets.clear(),
+        db.walletTransfers.clear(),
+        db.walletAdjustments.clear(),
         db.settings.clear(),
       ]);
 
@@ -29,6 +35,9 @@ export async function restoreBackup(payload: BackupPayload): Promise<void> {
         db.budgets.bulkAdd(payload.budgets),
         db.goals.bulkAdd(payload.goals),
         db.recurringPayments.bulkAdd(payload.recurringPayments),
+        db.wallets.bulkAdd(payload.wallets),
+        db.walletTransfers.bulkAdd(payload.walletTransfers),
+        db.walletAdjustments.bulkAdd(payload.walletAdjustments),
         db.settings.bulkAdd(payload.settings),
       ]);
     },

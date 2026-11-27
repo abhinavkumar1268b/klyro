@@ -3,6 +3,11 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { getBudgetPlan, listBudgetPlans, listBudgets } from "@/features/budget";
 import { listRecurringPayments } from "@/features/recurring";
+import {
+  listWalletAdjustments,
+  listWalletTransfers,
+  listWallets,
+} from "@/features/wallet";
 import { listCategories } from "@/features/categories";
 import { listGoals } from "@/features/goals";
 import { listTransactions } from "@/features/transactions";
@@ -15,6 +20,9 @@ import type {
   Goal,
   RecurringPayment,
   Transaction,
+  Wallet,
+  WalletAdjustment,
+  WalletTransfer,
 } from "@/types";
 
 interface Collection<T> {
@@ -95,6 +103,39 @@ export function useRecurringPayments(): Collection<RecurringPayment> {
   const isDemo = useDataStore((state) => state.mode === "demo");
   const live = useLiveQuery(() => listRecurringPayments());
   const demo = useDemoStore((state) => state.recurringPayments);
+  return {
+    data: isDemo ? demo : (live ?? []),
+    isLoading: !isDemo && live === undefined,
+    isDemo,
+  };
+}
+
+export function useWallets(): Collection<Wallet> {
+  const isDemo = useDataStore((state) => state.mode === "demo");
+  const live = useLiveQuery(() => listWallets());
+  const demo = useDemoStore((state) => state.wallets);
+  return {
+    data: isDemo ? demo : (live ?? []),
+    isLoading: !isDemo && live === undefined,
+    isDemo,
+  };
+}
+
+export function useWalletTransfers(): Collection<WalletTransfer> {
+  const isDemo = useDataStore((state) => state.mode === "demo");
+  const live = useLiveQuery(() => listWalletTransfers());
+  const demo = useDemoStore((state) => state.walletTransfers);
+  return {
+    data: isDemo ? demo : (live ?? []),
+    isLoading: !isDemo && live === undefined,
+    isDemo,
+  };
+}
+
+export function useWalletAdjustments(): Collection<WalletAdjustment> {
+  const isDemo = useDataStore((state) => state.mode === "demo");
+  const live = useLiveQuery(() => listWalletAdjustments());
+  const demo = useDemoStore((state) => state.walletAdjustments);
   return {
     data: isDemo ? demo : (live ?? []),
     isLoading: !isDemo && live === undefined,

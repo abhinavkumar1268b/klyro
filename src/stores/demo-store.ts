@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { walletIdForPaymentMethod } from "@/constants/wallets";
 import { toMinorUnits, todayISO } from "@/lib/calculations";
 import { importMockData } from "@/lib/db/import";
 import { createMockData } from "@/lib/mock/data";
@@ -17,6 +18,9 @@ import type {
   Goal,
   RecurringPayment,
   Transaction,
+  Wallet,
+  WalletAdjustment,
+  WalletTransfer,
 } from "@/types";
 
 interface DemoState {
@@ -26,7 +30,13 @@ interface DemoState {
   goals: Goal[];
   budgetPlans: Record<string, BudgetPlan>;
   recurringPayments: RecurringPayment[];
+  wallets: Wallet[];
+  walletTransfers: WalletTransfer[];
+  walletAdjustments: WalletAdjustment[];
   setBudgetPlan: (plan: BudgetPlan) => void;
+  updateWallet: (id: string, wallet: Wallet) => void;
+  addWalletTransfer: (transfer: WalletTransfer) => void;
+  addWalletAdjustment: (adjustment: WalletAdjustment) => void;
   addCategory: (category: Category) => void;
   updateCategory: (id: string, category: Category) => void;
   deleteCategory: (id: string) => void;
@@ -64,6 +74,10 @@ function toTransaction(values: TransactionFormValues, id: number, createdAt: str
     description: values.description?.trim() || undefined,
     date: values.date,
     paymentMethod: values.paymentMethod,
+    walletId:
+      values.type === "income" || values.type === "expense"
+        ? (walletIdForPaymentMethod(values.paymentMethod) ?? undefined)
+        : undefined,
     classification: values.type === "expense" ? values.classification : undefined,
     createdAt,
     updatedAt: now(),
@@ -117,6 +131,9 @@ export const useDemoStore = create<DemoState>()((set) => ({
   goals: seed.goals,
   budgetPlans: { [seed.budgetPlan.month]: seed.budgetPlan },
   recurringPayments: seed.recurringPayments,
+  wallets: seed.wallets,
+  walletTransfers: seed.walletTransfers,
+  walletAdjustments: seed.walletAdjustments,
 
   setBudgetPlan: (plan) =>
     set((state) => ({ budgetPlans: { ...state.budgetPlans, [plan.month]: plan } })),
@@ -262,6 +279,15 @@ export const useDemoStore = create<DemoState>()((set) => ({
       recurringPayments: state.recurringPayments.filter((payment) => payment.id !== id),
     })),
 
+  updateWallet: (id, wallet) =>
+    set((state) => ({
+      wallets: state.wallets.map((item) => (item.id === id ? wallet : item)),
+    })),
+  addWalletTransfer: (transfer) =>
+    set((state) => ({ walletTransfers: [transfer, ...state.walletTransfers] })),
+  addWalletAdjustment: (adjustment) =>
+    set((state) => ({ walletAdjustments: [adjustment, ...state.walletAdjustments] })),
+
   resetDemo: () =>
     set(() => {
       const fresh = createMockData();
@@ -272,6 +298,9 @@ export const useDemoStore = create<DemoState>()((set) => ({
         goals: fresh.goals,
         budgetPlans: { [fresh.budgetPlan.month]: fresh.budgetPlan },
         recurringPayments: fresh.recurringPayments,
+        wallets: fresh.wallets,
+        walletTransfers: fresh.walletTransfers,
+        walletAdjustments: fresh.walletAdjustments,
       };
     }),
 }));

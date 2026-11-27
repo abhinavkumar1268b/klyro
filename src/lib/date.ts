@@ -54,6 +54,13 @@ export function shiftLocalMonthKey(key: string, months: number): string {
   return localMonthKey(date);
 }
 
+export function formatLocalTime(timestamp: string, locale = "en-IN"): string {
+  return new Intl.DateTimeFormat(locale, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(timestamp));
+}
+
 export function localNow(): { dateKey: string; timestamp: string } {
   const now = new Date();
   return { dateKey: localDateKey(now), timestamp: now.toISOString() };
