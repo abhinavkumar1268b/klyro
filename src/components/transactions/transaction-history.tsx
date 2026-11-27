@@ -11,7 +11,6 @@ import {
   filterByDateRange,
   formatCurrency,
   formatDate,
-  formatLocalTime,
   formatMonth,
   getMonthKey,
   summarizeCashflow,
@@ -27,6 +26,7 @@ import { CategoryIcon } from "@/components/ui/category-icon";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { LocalTime } from "@/components/ui/local-time";
 import { SegmentedControl, type SegmentOption } from "@/components/ui/segmented-control";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -395,7 +395,7 @@ export function TransactionHistory({ initialRange }: TransactionHistoryProps) {
                         </div>
                         <p className="mt-0.5 truncate text-xs text-muted-foreground">
                           {categoryName(transaction.categoryId)} · {formatDate(transaction.date)} ·{" "}
-                          {formatLocalTime(transaction.createdAt)} · {walletLabel(transaction.paymentMethod)}
+                          <LocalTime timestamp={transaction.createdAt} /> · {walletLabel(transaction.paymentMethod)}
                         </p>
                         {transaction.description ? (
                           <p className="mt-0.5 truncate text-xs text-muted-foreground">

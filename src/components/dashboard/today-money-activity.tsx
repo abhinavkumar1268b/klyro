@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { ArrowDownLeft, ArrowRight, ArrowUpRight, ReceiptText } from "lucide-react";
 import { paymentMethodForWallet, walletIdForPaymentMethod } from "@/constants/wallets";
-import { formatCurrency, formatLocalTime, type DailyMoneyActivity } from "@/lib/calculations";
+import { formatCurrency, type DailyMoneyActivity } from "@/lib/calculations";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CategoryIcon } from "@/components/ui/category-icon";
 import { EmptyState } from "@/components/ui/empty-state";
+import { LocalTime } from "@/components/ui/local-time";
 import type { Category } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -102,7 +103,7 @@ export function TodayMoneyActivity({ activity, categories, dateLabel }: TodayMon
                       </div>
                       <p className="mt-0.5 truncate text-xs text-muted-foreground">
                         {nameFor(transaction.categoryId)} · {walletLabel(transaction.paymentMethod)} ·{" "}
-                        {formatLocalTime(transaction.createdAt)}
+                        <LocalTime timestamp={transaction.createdAt} />
                       </p>
                     </div>
                     <p

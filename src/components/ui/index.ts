@@ -3,6 +3,7 @@ export * from "./category-icon";
 export * from "./card";
 export * from "./input";
 export * from "./label";
+export * from "./local-time";
 export * from "./badge";
 export * from "./separator";
 export * from "./progress";

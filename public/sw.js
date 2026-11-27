@@ -5,7 +5,7 @@
  * documents and assets so the app can boot offline; it never caches API,
  * RSC or data responses.
  */
-const CACHE_NAME = "klyro-shell-v2";
+const CACHE_NAME = "klyro-shell-v3";
 
 const ROUTES = [
   "/",
